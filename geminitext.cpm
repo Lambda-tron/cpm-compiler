@@ -1,0 +1,97 @@
+volatile g:int := 0
+pi:float := 3.14159
+flag:boolean := true
+nums:int[] := int[1, 2, 3, 4, 5]
+mix:float[] := float[1.0, 2.5, (3.0 + 4.0) / 2.0]
+
+class Point {
+    x:int := 0
+    y:int := 0
+    
+    move(dx:int, dy:int): void {
+        x := dx
+        y := y + dy
+    }
+
+    dist2(): int {
+        return (x * x) + (y * y)
+    }
+}
+
+class Utils {
+    toggle(b:boolean): boolean {
+        return !b
+    }
+
+    scale(a:int, s:float): float {
+        return a * s
+    }
+
+    sumArray(a:int[]): int {
+        i:int := 0
+        total:int := 0
+
+        for (i:int := 0, i < a.length, i := i + 1) {
+            if ((a[i] != 0) & true) {
+                total := total + a[i]
+                continue
+            } else {
+                break
+            }
+        }
+
+        return total
+    }
+}
+
+main(): int {
+    p:Point := Point()
+    u:Utils := Utils()
+
+    x:int := 0
+    y:int
+    z:float := 2.0
+    b:boolean := false
+    arr2:int[] := int[10, 20, 30]
+
+    read(x)
+    read(arr2[0])
+
+    p.move(1, 2)
+    print(p.dist2())
+
+    print(nums.length)
+    print(arr2[0])
+    nums[1]
+
+    g := (g + 1) * 2
+    z := (z / 2.0) + (3.0 ^ 2.0)
+
+    b := ((x < 10) | (x = 10)) & (x <= 10)
+    flag := (x >= 0) & (x != 999)
+
+    if ((x > 0) & !false) {
+        print(int[1, 2, 3][2])
+    } else {
+        print(float[1.5, 2.5][0])
+    }
+
+    for (x:int := 0, x < 5, x := x + 1) {
+        print(x)
+    }
+
+    for (x := 0, x <= 3, x := x + 1) {
+        if (x = 2) {
+            continue
+        } else {
+            print(x)
+        }
+    }
+
+    print(u.sumArray(nums))
+    print(u.toggle(b))
+    print(u.scale(7, 0.5))
+
+
+    return 0
+}
