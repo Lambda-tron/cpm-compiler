@@ -23,17 +23,13 @@ public:
         
         //check for dead code
         if(didReturn && (node->lineno != returnLineNo-1 && node->lineno != returnLineNo)){
-            //cout << node->lineno << " " << returnLineNo << endl;
-            cerr << "Semantic Error (Line " << node->lineno
-                    << "): Dead Code! " << node->type << node->value << "\n";
-                    errorCount++;
+            err_dead_code(node->type, node->value, node->lineno);
         }
 
         //check dublicate definitions & defined datatypes
         if (node->type == "var"  || node->type == "v_var" || node->type == "method" || node->type == "class" || node->type == "param"){
             if(checkDublicateDefinition(node->value)){
-                cerr << "Semantic Error: Variable '" << node->value << "'" << " Already defined." << endl;
-                errorCount++;
+                err_duplicate_definition(node->value, node->lineno);
             }
 
             //check if data Type Exist
@@ -90,22 +86,14 @@ public:
                 string returnType = evalExprType(returned); 
                 
                 if (funcSymbol->type != returnType) {
-                    cerr << "Semantic Error (Line " << node->lineno
-                        << "): Return type mismatch in function '"
-                        << funcSymbol->name << "': expected '"
-                        << funcSymbol->type << "', got '"
-                        << returnType << "'.\n";
-                    errorCount++;
+                    err_return_type_mismatch(funcSymbol->name, funcSymbol->type, returnType, node->lineno);
                 }else{
                     returnLineNo = node->lineno;
                     didReturn = true;
                 
                 }
             }else{
-                cerr << "Semantic Error (Line " << node->lineno
-                << "): Cannot return a value from void function '"
-                << funcSymbol->name << "'\n";
-                errorCount++;
+                err_void_return_value(funcSymbol->name, node->lineno);
             }
 
             
@@ -121,10 +109,7 @@ public:
 
         if (openedScope) {
             if(hasReturnType && !didReturn){
-                cerr << "Semantic Error (Line " << node->lineno
-                        << "): Missing return for function '"
-                        << symbolTable->currentScope->name << "'\n";
-                errorCount++;
+                err_missing_return(symbolTable->currentScope->name, node->lineno);
             }
                 
             leaveScope();
@@ -260,20 +245,13 @@ public:
         string postReturnType = "";
         //this is calling a func from outside of its class
         if (post->type == "funcMethcall") {
-            if (post->type == "funcMethcall") {
-                if(!isBuiltinType(baseType)){
-                    postReturnType = validateFunctionCall(post,baseType);
-     
-                }else{
-                    cerr << "Semantic Error (Line " << post->lineno
-                    << "): Cannot access " << post->value
-                    << " with " << baseType << " Methods can only be accessd with its datatypes\n";
-                    errorCount++;
-                    postReturnType = "UNKOWN";
-                }
+            if(!isBuiltinType(baseType)){
+                postReturnType = validateFunctionCall(post,baseType);
+    
+            }else{
+                err_invalid_method_access(baseType, post->value, post->lineno);
+                postReturnType = "UNKOWN";
             }
-            //check if the function exists
-
         }
         else if (post->type == "arr_access" && (baseType == "arr_INT" || baseType == "arr_FLOAT")) {
 
@@ -283,10 +261,7 @@ public:
 
             
             if(accessType != "INT"){
-                cerr << "Semantic Error (Line " << post->lineno
-                    << "): Identifier " << base->value
-                    << " cannot be accessd with " << accessType << "\n";
-                    errorCount++;
+                err_invalid_index_type(base->value, accessType, post->lineno);
                 postReturnType = "UNKOWN";
             }else{
                 if(baseType == "arr_INT"){
@@ -308,19 +283,11 @@ public:
                 postReturnType = "INT";
             }
             else{
-                cerr << "Semantic Error (Line " << post->lineno
-                << "): Variable '" << base->value
-                << "' of type '" << baseSym->type
-                << "' does not support '" << post->type
-                << "' and its length cannot be accessed\n";
-                errorCount++;
+                err_invalid_length_access(base->value, baseSym->type, post->lineno);
                 postReturnType = "UNKOWN";
-
             }
 
         }
-
-    
         return postReturnType;
     }
 
@@ -367,8 +334,7 @@ public:
             if(classScope){
                 return classScope->name;
             }
-            cerr << "Semantic Error (Line " << funcNode->lineno<< "): Method '" << funcNode->value << " doest exist." << " \n";
-            errorCount++;
+            err_method_not_found(funcNode->value, funcNode->lineno);
             return "UNKOWN"; 
         }
 
@@ -392,11 +358,7 @@ public:
         Node* argsNode = *it;
         int argCount = argsNode->children.size();
         if (argCount != expectedArgs) { 
-            cerr << "Semantic Error (Line " << argsNode->lineno
-                << "): Method '" << funcScope->name
-                << "' expects " << expectedArgs
-                << " argument(s), got " << argCount << "\n";
-                errorCount++;
+            err_argument_count(funcScope->name, expectedArgs, argCount, argsNode->lineno);
             return funcSymbol->type;
         }
 
@@ -410,10 +372,7 @@ public:
             if(argument->type == "call"){
                 argType = validateFunctionCall(argument);
             }else if (argument->type == "postfix"){
-                //cout << "LINE: " << argument->lineno << ", argument: " << argument->type << endl; 
                 argType = getPostFixDatatype(argument);
-                //cout << "LINE: " << argument->lineno << ", returned typ: " << argType << endl; 
-
             }else if(argument->type == "ID"){
                 Symbol* argSymbol = lookup(argument->value);
                 if(argSymbol==nullptr){
@@ -424,12 +383,7 @@ public:
 
             symbolIndex++;
             if (argType != paramType && argType != "") {
-                cerr << "Semantic Error (Line " << argument->lineno
-                    << "): Argument " << (symbolIndex)
-                    << " of method '" << funcScope->name
-                    << "' must be '" << paramType
-                    << "', got '" << argType << "'\n";
-                    errorCount++;
+                err_argument_type(funcScope->name, symbolIndex, paramType, argType, argument->lineno);
             }
         }
         //cout << "now will return " << funcSymbol->type << endl;
@@ -487,13 +441,10 @@ public:
         if (leftType == "UNKOWN" || rightType == "UNKOWN") return "UNKOWN";
         
 
-        if ((leftType == "INT" || rightType == "FLOAT") && (rightType == "INT" || rightType == "FLOAT")) {
+        if ((leftType == "INT" || leftType == "FLOAT") && (rightType == "INT" || rightType == "FLOAT")) {
 
             if(leftType != rightType){
-                cerr << "Semantic Error (Line " << opNode->lineno
-                    << "):" << " requires both operands to have same type, got "
-                    << leftType << "' and '" << rightType << "'.\n";
-                errorCount++;
+                err_operand_type_mismatch(opNode->type, leftType, rightType, opNode->lineno);
                 return "UNKOWN";
             }
 
@@ -501,11 +452,7 @@ public:
             return leftType;
 
         }else{
-            cerr << "Semantic Error (Line " << opNode->lineno
-                << "): Arithmetic operator requires numeric operands, got '"
-                << leftType << "' and '" << rightType << "'.\n";
-
-            errorCount++;
+            err_operand_type_mismatch(opNode->type, leftType, rightType, opNode->lineno);
             return "UNKOWN";
         }
 
@@ -525,10 +472,7 @@ public:
         //check if its AND OR both sides should be bool
         if(relNode->type == "and" || relNode->type == "or"){
             if (leftType != "BOOL" && rightType != "BOOL") {
-                cerr << "Semantic Error (Line " << relNode->lineno
-                    << "): '" << relNode->type <<"' operator requires BOOL operands, got '"
-                    << leftType << "' and '" << rightType << "'.\n";
-                errorCount++;
+                err_operand_type_mismatch(relNode->type, leftType, rightType, relNode->lineno);
                 return "UNKOWN";
             }
         }else{
@@ -536,11 +480,7 @@ public:
             bool valid = (leftType == "INT"   && rightType == "INT") || (leftType == "FLOAT" && rightType == "FLOAT");
 
             if (!valid) {
-                cerr << "Semantic Error (Line " << relNode->lineno
-                    << "): Relational operator '" << relNode->value
-                    << "' requires operands of the same numeric type (INT or FLOAT), got '"
-                    << leftType << "' and '" << rightType << "'.\n";
-                errorCount++;
+                err_operand_type_mismatch(relNode->value, leftType, rightType, relNode->lineno);
                 return "UNKOWN";
             }          
         }
@@ -602,9 +542,7 @@ public:
             string childType = evalExprType(child);
             
             if(childType!="BOOL"){
-                cerr << "Semantic Error (Line " << n->lineno
-                    << "): expected BOOL after '!' but got '" << childType << "'.\n";
-                errorCount++;
+                err_expected_bool_after_not(childType, n->lineno);
                 return "UNKOWN";
             }
 
@@ -631,15 +569,151 @@ public:
             }
         }
         if(!foundClassTemp){
-            cerr << "Semantic Error (Line " << funcNode->lineno<< "): Class '" << className << " Doesnt Exist'\n";
+            err_class_not_found(className, funcNode->lineno);
         }else{
-            cerr << "Semantic Error (Line " << funcNode->lineno<< "): Method '" << funcNode->value << " Doesnt Exist'\n";
+            err_method_not_found(funcNode->value, funcNode->lineno);        
         }
-        errorCount++;
         return nullptr; 
     }
 
-    //error reporting
+    void err_dead_code(const string& nodeType, const string& nodeValue, int lineno) {
+        cerr << "Semantic Error (Line " << lineno
+            << "): Unreachable code detected near '" << nodeType << " " << nodeValue << "'."
+            << endl;
+        errorCount++;
+    }
+
+    void err_duplicate_definition(const string& name, int lineno) {
+        cerr << "Semantic Error (Line " << lineno
+            << "): Duplicate definition of '" << name << "'."
+            << endl;
+        errorCount++;
+    }
+
+    void err_return_type_mismatch(const string& funcName,
+                                const string& expectedType,
+                                const string& actualType,
+                                int lineno) {
+        cerr << "Semantic Error (Line " << lineno
+            << "): Return type mismatch in function '" << funcName
+            << "'. Expected '" << expectedType
+            << "', got '" << actualType << "'."
+            << endl;
+        errorCount++;
+    }
+
+    void err_void_return_value(const string& funcName, int lineno) {
+        cerr << "Semantic Error (Line " << lineno
+            << "): Cannot return a value from void function '" << funcName << "'."
+            << endl;
+        errorCount++;
+    }
+
+    void err_missing_return(const string& funcName, int lineno) {
+        cerr << "Semantic Error (Line " << lineno
+            << "): Missing return statement in function '" << funcName << "'."
+            << endl;
+        errorCount++;
+    }
+
+    void err_invalid_method_access(const string& baseType,
+                                const string& methodName,
+                                int lineno) {
+        cerr << "Semantic Error (Line " << lineno
+            << "): Cannot access method '" << methodName
+            << "' on value of type '" << baseType << "'."
+            << endl;
+        errorCount++;
+    }
+
+    void err_invalid_index_type(const string& name,
+                                const string& indexType,
+                                int lineno) {
+        cerr << "Semantic Error (Line " << lineno
+            << "): Cannot index '" << name
+            << "' with expression of type '" << indexType << "'."
+            << endl;
+        errorCount++;
+    }
+
+    void err_invalid_length_access(const string& varName,
+                                const string& varType,
+                                int lineno) {
+        cerr << "Semantic Error (Line " << lineno
+            << "): Variable '" << varName
+            << "' of type '" << varType
+            << "' does not support '.length'."
+            << endl;
+        errorCount++;
+    }
+
+    void err_method_not_found(const string& methodName, int lineno) {
+        cerr << "Semantic Error (Line " << lineno
+            << "): Method '" << methodName << "' does not exist."
+            << endl;
+        errorCount++;
+    }
+
+    void err_class_not_found(const string& className, int lineno) {
+        cerr << "Semantic Error (Line " << lineno
+            << "): Class '" << className << "' does not exist."
+            << endl;
+        errorCount++;
+    }
+
+    void err_argument_count(const string& methodName,
+                            int expectedArgs,
+                            int actualArgs,
+                            int lineno) {
+        cerr << "Semantic Error (Line " << lineno
+            << "): Method '" << methodName
+            << "' expects " << expectedArgs
+            << " argument(s), got " << actualArgs << "."
+            << endl;
+        errorCount++;
+    }
+
+    void err_argument_type(const string& methodName,
+                        int argIndex,
+                        const string& expectedType,
+                        const string& actualType,
+                        int lineno) {
+        cerr << "Semantic Error (Line " << lineno
+            << "): Argument " << argIndex
+            << " of method '" << methodName
+            << "' must be of type '" << expectedType
+            << "', got '" << actualType << "'."
+            << endl;
+        errorCount++;
+    }
+
+    void err_operand_type_mismatch(const string& opName,
+                                const string& leftType,
+                                const string& rightType,
+                                int lineno) {
+        cerr << "Semantic Error (Line " << lineno
+            << "): Operator '" << opName
+            << "' requires compatible operands, got '"
+            << leftType << "' and '" << rightType << "'."
+            << endl;
+        errorCount++;
+    }
+
+    void err_expected_bool_after_not(const string& actualType, int lineno) {
+        cerr << "Semantic Error (Line " << lineno
+            << "): Operator '!' requires operand of type 'BOOL', got '"
+            << actualType << "'."
+            << endl;
+        errorCount++;
+    }
+    
+    void err_undefined_identifier(const string& name, const string& kind, int lineno) {
+        cerr << "Semantic Error (Line " << lineno
+            << "): Undefined " << kind << " '" << name << "'."
+            << endl;
+        errorCount++;
+    }
+
     void err_dataType_assignment(const string& lhsName,
                                 const string& lhsType,
                                 const string& rhsType,
@@ -651,35 +725,14 @@ public:
             << endl;
         errorCount++;
     }
-    void err_undefined_identifier(const string& name, const string& kind, int lineno) {
-        cerr << "Semantic Error (Line " << lineno
-            << "): Undefined " << kind << " '" << name << "'." << endl;
-        errorCount++;
-    }
-    void err_invalid_array_access(const string& arrayElemType,const string& indexType,int lineno) {
-        cerr << "Semantic Error (Line " << lineno
-            << "): Cannot access array of type '" << arrayElemType
-            << "' with index of type '" << indexType << "'."
-            << endl;
-        errorCount++;
-    }
+
     void err_invalid_lvalue(int lineno) {
         cerr << "Semantic Error (Line " << lineno
             << "): Left-hand side of assignment is not assignable."
             << endl;
         errorCount++;
     }
-    void err_invalid_return_type(const string& funcName,
-        const string& expectedType,
-        const string& actualType,
-        int lineno) {
-        cerr << "Semantic Error (Line " << lineno
-            << "): Return type mismatch in function '" << funcName
-            << "'. Expected '" << expectedType
-            << "', got '" << actualType << "'."
-            << endl;
-        errorCount++;
-    }
+
     void err_undefined_datatype(const string& varName,const string& typeName,int lineno) {
         cerr << "Semantic Error (Line " << lineno
             << "): Variable '" << varName
@@ -687,29 +740,26 @@ public:
             << endl;
         errorCount++;
     }
-    void err_invalid_condition_type(string type, int line) {
-        cerr << "Semantic error at line " << line
-            << ": condition must be BOOL, got " << type << endl;
-        errorCount++;
 
+    void err_invalid_condition_type(const string& type, int lineno) {
+        cerr << "Semantic Error (Line " << lineno
+            << "): Condition must be of type 'BOOL', got '" << type << "'."
+            << endl;
+        errorCount++;
     }
+
     void err_invalid_initialization(const string& varName,
                                 const string& varType,
                                 const string& valueType,
                                 int lineno) {
         cerr << "Semantic Error (Line " << lineno
-            << "): Cannot assign value of type '" << valueType
-            << "' to variable '" << varName
+            << "): Cannot initialize variable '" << varName
             << "' of type '" << varType
-            << "' during declaration."
+            << "' with value of type '" << valueType << "'."
             << endl;
         errorCount++;
     }
-    void printTotalErrors(){
-        if(errorCount>0){
-            cout << "Total Errors: " << errorCount << endl;
-        }
-    }
+
     void err_array_element_type(const string& expectedType,
                             const string& actualType,
                             int index,
@@ -717,9 +767,15 @@ public:
         cerr << "Semantic Error (Line " << lineno
             << "): Array element at index " << index
             << " must be of type '" << expectedType
-            << "', but got '" << actualType << "'."
+            << "', got '" << actualType << "'."
             << endl;
         errorCount++;
+    }
+
+    void printTotalErrors(){
+        if(errorCount>0){
+            cout << "Total Errors: " << errorCount << endl;
+        }
     }
 };
 
