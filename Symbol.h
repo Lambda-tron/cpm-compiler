@@ -71,10 +71,11 @@ public:
             currentScope->insertSymbol(new Symbol(n->value, n->type));
         }
         else if (n->type == "type") {
+
             if (!currentScope->symbols.empty()) {
                 if (currentScope->symbols.back()->type == "UNDEFINED") {
                     currentScope->symbols.back()->type = n->value;
-                }else{
+                }else if(currentScope->parent->symbols.back()->type == "UNDEFINED"){
                     currentScope->parent->symbols.back()->type = n->value;
                 }
             } else if (currentScope->parent && currentScope->parent->symbols.back()->type == "UNDEFINED") {

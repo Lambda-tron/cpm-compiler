@@ -33,7 +33,6 @@ public:
         if (node->type == "var"  || node->type == "v_var" || node->type == "method" || node->type == "class" || node->type == "param"){
             if(checkDublicateDefinition(node->value)){
                 cerr << "Semantic Error: Variable '" << node->value << "'" << " Already defined." << endl;
-                
                 errorCount++;
             }
 
@@ -48,6 +47,9 @@ public:
                         err_undefined_datatype(symbol->name, symbol->type, node->lineno);
                     }
                 }
+
+                //check if the definition is valid
+                validateDefiniation(node);
             }
         }
 
@@ -61,6 +63,11 @@ public:
             }
         }
 
+        //evaluate postfixes
+        if(node->type == "postfix"){
+            string postFixType = evalExprType(node);
+        }
+
         //Enter scope
         if (node->type == "class" || node->type == "method" || node->type == "IF" || node->type == "FOR" || 
             ((symbolTable->currentScope->name == "IF" || symbolTable->currentScope->name == "IFELSE") && node->type == "Stmtblock")) {
@@ -68,7 +75,7 @@ public:
                     Symbol* sy = lookup(node->value);
                     if(sy->type != "VOID"){
                         hasReturnType=true;
-
+                        
                     }
                 }
 
@@ -81,6 +88,7 @@ public:
             if(funcSymbol->type != "VOID"){
                 Node* returned = *node->children.begin();
                 string returnType = evalExprType(returned); 
+                
                 if (funcSymbol->type != returnType) {
                     cerr << "Semantic Error (Line " << node->lineno
                         << "): Return type mismatch in function '"
@@ -131,6 +139,27 @@ public:
         symbolTable->currentScope = symbolTable->currentScope->childrenScopes[symbolTable->currentScope->nextChildIndex];
         symbolTable->currentScope->parent->nextChildIndex++;
         symbolTable->currentScope->nextChildIndex = 0; 
+    }
+
+    //validate the definition
+    void validateDefiniation(Node* n){
+        
+        //return if we are not assigning anything at the definition
+        if(n->children.size() < 2) return;
+        //access the type node and the value node
+        auto it = n->children.begin();
+        Node* dataType = *it++;
+        Node* value = *it;
+        //cout << "validating: " << n->type << ":" << n->value << endl;
+        string nodeDT = evalExprType(value);
+        //datatypes can only be INT,BOOL,FLOAT,arr_INT,arr_FLOAT
+        if(dataType->value != nodeDT){
+            if (((nodeDT == "arr_INT"  && dataType->value != "INT") || (nodeDT == "arr_FLOAT" && dataType->value != "FLOAT")) || dataType->value != nodeDT) {
+                err_invalid_initialization(n->value, dataType->value, nodeDT, n->lineno);
+                return;
+            }
+        }
+
     }
 
     //lookup if a variable has been declared in the currentScope or the one wrapping it.
@@ -220,7 +249,9 @@ public:
         }
         else if(base->type == "call"){
             string funcType = validateFunctionCall(base);
+
             baseType = funcType;
+            
         }
         else if(base->type == "postfix"){
             baseType = getPostFixDatatype(base);
@@ -229,22 +260,19 @@ public:
         string postReturnType = "";
         //this is calling a func from outside of its class
         if (post->type == "funcMethcall") {
-            if(!isBuiltinType(baseType)){
-                postReturnType = validateFunctionCall(post,baseType);
-                /*cout << "LINE: " << post->lineno
-                    << " | base type: " << base->type
-                    << ", base value: " << base->value
-                    << " | post type: " << post->type
-                    << ", post value: " << post->value
-                    << "| and returned: " << postReturnType
-                    << endl;    */        
+            if (post->type == "funcMethcall") {
+                if(!isBuiltinType(baseType)){
+                    postReturnType = validateFunctionCall(post,baseType);
+     
                 }else{
-                cerr << "Semantic Error (Line " << post->lineno
-                << "): Cannot access " << post->value
-                << " with " << baseType << " Methods can only be accessd wiht its datatypes\n";
-                errorCount++;
-                postReturnType = "UNKOWN";
+                    cerr << "Semantic Error (Line " << post->lineno
+                    << "): Cannot access " << post->value
+                    << " with " << baseType << " Methods can only be accessd with its datatypes\n";
+                    errorCount++;
+                    postReturnType = "UNKOWN";
+                }
             }
+            //check if the function exists
 
         }
         else if (post->type == "arr_access" && (baseType == "arr_INT" || baseType == "arr_FLOAT")) {
@@ -297,10 +325,17 @@ public:
     }
 
     //check the function datatype, parameters given.
-    string validateFunctionCall(Node* funcNode, string className = ""/*ONLY WHEN THE METHOD outside the scope*/){
+    string validateFunctionCall(Node* funcNode, string className = ""){
         /*
             main() : int {
                 Obj.func() <-funcmethcall
+
+                SPECIAL CASE 
+                CLASS().func()
+                NOT ALLOWED
+                CLASS(arg).func()
+                ALLOWED
+                METHOD(arg).func()
             }
 
             class Obj2{
@@ -316,106 +351,89 @@ public:
 
         //get the function scope
         Scope* funcScope = nullptr;
-        Symbol* funcSymbol = nullptr;
-
-        
+        Symbol* funcSymbol = nullptr;  
         if(className == ""){
-            //cout << "from inside§: "<< funcNode->type <<endl;
-                funcScope = getMethodScopeInSameClass(funcNode->value);
-            }
-            else{
-                Scope* foundClassTemp = nullptr;
-                //cout << funcNode->lineno << funcNode->value << endl;
-                //get the function symbol outside the current scope
-                for(Scope* classScope: symbolTable->rootScope->childrenScopes){
-                    if(classScope->name == className){
-                        //cout << "FOUND CLASS " << className << endl;
-                        foundClassTemp = classScope;
-                className = classScope->name;
-                        //get the funcscope if the class scope was found
-                        for(Scope* for_funcSccope: foundClassTemp->childrenScopes){
-                            //cout << "symbol " << for_funcSccope->name << endl;
-                            if(for_funcSccope->name == funcNode->value){
-                                funcScope = for_funcSccope;
-                            }  
-                        } 
-                    }
-                }
-                if(!foundClassTemp){
-                    cerr << "Semantic Error (Line " << funcNode->lineno<< "): Class '" << className << " Doesnt Exist'\n";
-                    errorCount++;
-                    return "UNKOWN"; 
-                }
-            }
+            //get the func scope if its called within the class.
+            funcScope = getMethodScopeInSameClass(funcNode->value);
+        }
+        else{
+            //get the func scope iif its called outside the class.
+            funcScope = getFuncFromDiffScope(funcNode, className);
+        }
 
-            if(!funcScope){
-                cerr << "Semantic Error (Line " << funcNode->lineno<< "): Method '" << funcNode->value << " doest exist." << " \n";
+        if(!funcScope){
+            //check if class exists then it could be a class isntance CLASS().METHOD()
+            Scope* classScope = getClassScope(funcNode->value);
+            if(classScope){
+                return classScope->name;
+            }
+            cerr << "Semantic Error (Line " << funcNode->lineno<< "): Method '" << funcNode->value << " doest exist." << " \n";
+            errorCount++;
+            return "UNKOWN"; 
+        }
+
+        //get the functionSymbol to get its return type
+        for(Symbol* sy : funcScope->parent->symbols){
+            if(sy->name== funcScope->name){
+                funcSymbol = sy;
+            }
+        }
+        
+        //get the arguments that the function takes
+        int expectedArgs = 0;
+        for(int i = 0; i < funcScope->symbols.size(); i++){
+            if(funcScope->symbols[i]->kind == "param"){
+                expectedArgs++;
+            }
+        }
+
+        //make sure both given arguments = amount of paramets
+        auto it = funcNode->children.begin();
+        Node* argsNode = *it;
+        int argCount = argsNode->children.size();
+        if (argCount != expectedArgs) { 
+            cerr << "Semantic Error (Line " << argsNode->lineno
+                << "): Method '" << funcScope->name
+                << "' expects " << expectedArgs
+                << " argument(s), got " << argCount << "\n";
                 errorCount++;
-                return "UNKOWN"; 
-            }
-
-            //get the functionSymbol to get its return type
-            for(Symbol* sy : funcScope->parent->symbols){
-                if(sy->name== funcScope->name){
-                    funcSymbol = sy;
-                }
-            }
-            
-            //get the arguments that the function takes
-            int expectedArgs = 0;
-            for(int i = 0; i < funcScope->symbols.size(); i++){
-                if(funcScope->symbols[i]->kind == "param"){
-                    expectedArgs++;
-                }
-            }
-
-            //make sure both given arguments = amount of paramets
-            auto it = funcNode->children.begin();
-            Node* argsNode = *it;
-            int argCount = argsNode->children.size();
-            if (argCount != expectedArgs) { 
-                cerr << "Semantic Error (Line " << argsNode->lineno
-                    << "): Method '" << funcScope->name
-                    << "' expects " << expectedArgs
-                    << " argument(s), got " << argCount << "\n";
-                    errorCount++;
-                return funcSymbol->type;
-            }
-
-            //check all arguments has the correct type
-            int symbolIndex = 0;
-
-            for (Node* argument: argsNode->children) {
-                string argType = argument->type;
-                string paramType = funcScope->symbols[symbolIndex]->type;
-                //check if its call or POSTFIX
-                if(argument->type == "call"){
-                    argType = validateFunctionCall(argument);
-                }else if (argument->type == "postfix"){
-                    //cout << "LINE: " << argument->lineno << ", argument: " << argument->type << endl; 
-                    argType = getPostFixDatatype(argument);
-                    //cout << "LINE: " << argument->lineno << ", returned typ: " << argType << endl; 
-
-                }else if(argument->type == "ID"){
-                    Symbol* argSymbol = lookup(argument->value);
-                    if(argSymbol==nullptr){
-                        err_undefined_identifier(argument->value,argument->type,argument->lineno);
-                    }
-                    argType = argSymbol->type;
-                }
-
-                symbolIndex++;
-                if (argType != paramType && argType != "") {
-                    cerr << "Semantic Error (Line " << argument->lineno
-                        << "): Argument " << (symbolIndex)
-                        << " of method '" << funcScope->name
-                        << "' must be '" << paramType
-                        << "', got '" << argType << "'\n";
-                        errorCount++;
-                }
-            }
-            //cout << "now will return " << funcSymbol->type << endl;
             return funcSymbol->type;
+        }
+
+        //check all arguments has the correct type
+        int symbolIndex = 0;
+
+        for (Node* argument: argsNode->children) {
+            string argType = argument->type;
+            string paramType = funcScope->symbols[symbolIndex]->type;
+            //check if its call or POSTFIX
+            if(argument->type == "call"){
+                argType = validateFunctionCall(argument);
+            }else if (argument->type == "postfix"){
+                //cout << "LINE: " << argument->lineno << ", argument: " << argument->type << endl; 
+                argType = getPostFixDatatype(argument);
+                //cout << "LINE: " << argument->lineno << ", returned typ: " << argType << endl; 
+
+            }else if(argument->type == "ID"){
+                Symbol* argSymbol = lookup(argument->value);
+                if(argSymbol==nullptr){
+                    err_undefined_identifier(argument->value,argument->type,argument->lineno);
+                }
+                argType = argSymbol->type;
+            }
+
+            symbolIndex++;
+            if (argType != paramType && argType != "") {
+                cerr << "Semantic Error (Line " << argument->lineno
+                    << "): Argument " << (symbolIndex)
+                    << " of method '" << funcScope->name
+                    << "' must be '" << paramType
+                    << "', got '" << argType << "'\n";
+                    errorCount++;
+            }
+        }
+        //cout << "now will return " << funcSymbol->type << endl;
+        return funcSymbol->type;
     }
 
     //get a scope for a given class or method name
@@ -467,6 +485,7 @@ public:
         string rightType = evalExprType(right);
 
         if (leftType == "UNKOWN" || rightType == "UNKOWN") return "UNKOWN";
+        
 
         if ((leftType == "INT" || rightType == "FLOAT") && (rightType == "INT" || rightType == "FLOAT")) {
 
@@ -529,7 +548,6 @@ public:
     }
 
     string evalExprType(Node* n) {
-        //if (!n) return "UNKOWN";
 
         // Variables
         if (n->type == "ID") {
@@ -537,7 +555,6 @@ public:
             if (!sym) { err_undefined_identifier(n->value, n->type, n->lineno); return "UNKOWN"; }
             return sym->type;
         }
-
         
         if (n->type == "INT" || n->type == "FLOAT" || n->type == "BOOL") {
             return n->type;
@@ -548,13 +565,33 @@ public:
             return getPostFixDatatype(n);
         }
 
+        //validate array initiation
+        if(n->type == "init_array"){
+            //access the type node and the value node
+            auto it = n->children.begin();
+            Node* dataType = *it++;
+            Node* values = *it;
+            int index = 0;
+            for(Node* value: values->children){
+                if(dataType->value != value->type){
+                    err_array_element_type(dataType->value, value->type, index, value->lineno);
+                }
+                index++;
+            }
+            if(dataType->value == "INT"){
+                return "arr_INT";
+            }else{
+                return "arr_FLOAT";
+            }
+        }
+
         // Function call node
         if (n->type == "call") {
             return validateFunctionCall(n);
         }
 
         // Arithmetic ops 
-        if (n->type == "PLUSOP" || n->type == "MINOP" || n->type == "MULTOP" ||  n->type == "DIVOP")  return arthmetics(n);
+        if (n->type == "PWROP" || n->type == "PLUSOP" || n->type == "MINOP" || n->type == "MULTOP" ||  n->type == "DIVOP")  return arthmetics(n);
 
         // relop/and/or 
         if (n->type == "and" || n->type == "or" || n->type == "relop")  return relop(n);
@@ -575,6 +612,31 @@ public:
         }
 
         return n->type;
+    }
+
+    Scope* getFuncFromDiffScope(Node* funcNode, string className){
+        Scope* foundClassTemp = nullptr;
+        for(Scope* classScope: symbolTable->rootScope->childrenScopes){
+            if(classScope->name == className){
+                //cout << "FOUND CLASS " << className << endl;
+                foundClassTemp = classScope;
+                className = classScope->name;
+                //get the funcscope if the class scope was found
+                for(Scope* for_funcSccope: foundClassTemp->childrenScopes){
+                    //cout << "symbol " << for_funcSccope->name << endl;
+                    if(for_funcSccope->name == funcNode->value){
+                        return for_funcSccope;
+                    }  
+                } 
+            }
+        }
+        if(!foundClassTemp){
+            cerr << "Semantic Error (Line " << funcNode->lineno<< "): Class '" << className << " Doesnt Exist'\n";
+        }else{
+            cerr << "Semantic Error (Line " << funcNode->lineno<< "): Method '" << funcNode->value << " Doesnt Exist'\n";
+        }
+        errorCount++;
+        return nullptr; 
     }
 
     //error reporting
@@ -631,10 +693,33 @@ public:
         errorCount++;
 
     }
+    void err_invalid_initialization(const string& varName,
+                                const string& varType,
+                                const string& valueType,
+                                int lineno) {
+        cerr << "Semantic Error (Line " << lineno
+            << "): Cannot assign value of type '" << valueType
+            << "' to variable '" << varName
+            << "' of type '" << varType
+            << "' during declaration."
+            << endl;
+        errorCount++;
+    }
     void printTotalErrors(){
         if(errorCount>0){
             cout << "Total Errors: " << errorCount << endl;
         }
+    }
+    void err_array_element_type(const string& expectedType,
+                            const string& actualType,
+                            int index,
+                            int lineno) {
+        cerr << "Semantic Error (Line " << lineno
+            << "): Array element at index " << index
+            << " must be of type '" << expectedType
+            << "', but got '" << actualType << "'."
+            << endl;
+        errorCount++;
     }
 };
 
