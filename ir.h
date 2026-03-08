@@ -12,10 +12,6 @@
 
 using namespace std;
 
-
-
-
-
 //expressions
 class TAC{
     string name,operand1,operand2,OP;
@@ -24,13 +20,21 @@ class TAC{
     : name(name), operand1(operand1), operand2(operand2), OP(OP){}
 
     string to_str(){
-        string text;
-        if(this->name == "print" || this->name == "return"){
-            text = this->name + " " + this->operand1 + this->OP + this->operand2 ;
-        }else{
-            text = this->name + " = " + this->operand1 + this->OP + this->operand2 ;
+        if(name == "print" || name == "return" || name == "read"){
+            return name + " " + operand1;
         }
-        return text;
+        else if(name == "goto"){
+            return "goto " + operand1;
+        }
+        else if(name == "ifFalse"){
+            return "ifFalse " + operand1 + " goto " + operand2;
+        }
+        else if(operand1 == "" && OP == "" && operand2 == ""){
+            return name + ":";
+        }
+        else{
+            return name + " = " + operand1 + OP + operand2;
+        }
     }
 };
 
@@ -40,73 +44,131 @@ class BasicBlock{
     string name;
     vector<TAC> TACs;
     BasicBlock* nextBlock = nullptr;
+    BasicBlock* previousBlock = nullptr;
     BasicBlock(string name): name(name){}
 };
 
 class IR{
     private:
         BasicBlock* currentBB = nullptr;
-        BasicBlock* rootBB = nullptr;
 
     public:
         IR(const Node* node, const ST* symbolTable){
             travers(node);
+            printIR();
         }
 
-        void travers(const Node* n, int depth = 0) {
+        void travers(const Node* n) {
             bool openScope = false;
             //create a block
             if (n->type == "method") {
                 string blockName = n->type+":"+n->value;
-                if(currentBB){
-                    BasicBlock* block = new BasicBlock(blockName) ;
-                    currentBB->nextBlock = block;
+                if(currentBB == nullptr){
+                    BasicBlock* block = new BasicBlock(blockName);
                     currentBB = block;
                 }else{
-                    BasicBlock* block = new BasicBlock(blockName) ;
-                    currentBB = block;
-                    rootBB = block;
+                    /*BasicBlock* block = new BasicBlock(blockName);
+                    block->previousBlock=currentBB;
+                    currentBB->nextBlock=block;
+                    currentBB = block;*/
                 }
-                
             }
-            //convert to TAC
-            else{
-
-                if (n->type == "v_var" || n->type == "var"){
-                    auto it = n->children.begin();
-                    Node* lhs = *it++;
-                    Node* rhs = nullptr;
-                    if(n->children.size() > 1){
-                        rhs = *it;
-                    }
-                    currentBB->TACs.push_back(TAC(n->value,"new","",lhs->value));
-                    if(rhs){
-                        string rhs_value = genTACS(rhs);
-                        currentBB->TACs.push_back(TAC(n->value,rhs_value,"",""));  
-                    }
-
-                }else if(n->type == "print" || n->type == "return" || n->type == "read"){
-                    auto it = n->children.begin();
-                    Node* lhs = *it;
-                    string returnedVariable = genTACS(lhs);
-                    currentBB->TACs.push_back(TAC(n->type,returnedVariable));
+            else if (n->type == "v_var" || n->type == "var"){
+                auto it = n->children.begin();
+                Node* lhs = *it++;
+                Node* rhs = nullptr;
+                if(n->children.size() > 1){
+                    rhs = *it;
                 }
-                else if(n->type == "assign"){
-                    auto it = n->children.begin();
-                    Node* lhs = *it++;
-                    Node* rhs = *it;
+                currentBB->TACs.push_back(TAC(n->value,"new","",lhs->value));
+                if(rhs){
                     string rhs_value = genTACS(rhs);
-                    currentBB->TACs.push_back(TAC(lhs->value,rhs_value));  
+                    currentBB->TACs.push_back(TAC(n->value,rhs_value,"",""));  
                 }
-                else if(n->type == "FOR"){
-                    
+            }else if(n->type == "print" || n->type == "return" || n->type == "read"){
+                auto it = n->children.begin();
+                Node* lhs = *it;
+                string returnedVariable = genTACS(lhs);
+                currentBB->TACs.push_back(TAC(n->type,returnedVariable));
+            }else if(n->type == "assign"){
+                auto it = n->children.begin();
+                Node* lhs = *it++;
+                Node* rhs = *it;
+                string rhs_value = genTACS(rhs);
+                currentBB->TACs.push_back(TAC(lhs->value,rhs_value));  
+            }else if(n->type == "FOR"){
+                auto it = n->children.begin();
+
+                Node* initNode = nullptr;
+                Node* condNode = nullptr;
+                Node* updateNode = nullptr;
+                Node* stmtBlockNode = nullptr;
+
+                if(it != n->children.end()) initNode = *it++;
+                if(it != n->children.end()) condNode = *it++;
+                if(it != n->children.end()) updateNode = *it++;
+                if(it != n->children.end()) stmtBlockNode = *it++;
+
+                string loopName = genStr(3);
+                string exitName = genStr(3);
+
+                if(initNode){
+                    travers(initNode);
                 }
+
+                currentBB->TACs.push_back(TAC(loopName));
+
+                if(condNode && condNode->type == "relop"){
+                    string boolVar = genTACS(condNode);
+                    currentBB->TACs.push_back(TAC("ifFalse", boolVar, "goto", exitName));
+                }
+
+                if(stmtBlockNode && stmtBlockNode->type == "Stmtblock"){
+                    Node* stmtList = *stmtBlockNode->children.begin();
+                    travers(stmtList);
+                }
+
+                if(updateNode){
+                    travers(updateNode);
+                }
+
+                currentBB->TACs.push_back(TAC("goto", loopName));
+
+                currentBB->TACs.push_back(TAC(exitName));
+
+                return;
+            }else if(n->type == "IF"){
+                auto it = n->children.begin();
+
+                Node* relop = nullptr;
+                Node* statements = nullptr;
+
+
+                if(it != n->children.end()) relop = *it++;
+                if(it != n->children.end()) statements = *it++;
+
+                string exitName = genStr(3);
+                
+                if(relop && relop->type == "relop"){
+                    string boolVar = genTACS(relop);
+                    currentBB->TACs.push_back(TAC("ifFalse", boolVar, "goto", exitName));
+                }
+
+                if(statements && statements->type == "Stmtblock"){
+                    Node* stmtList = *statements->children.begin();
+                    travers(stmtList);
+                }
+                currentBB->TACs.push_back(TAC(exitName));
+                return;
             }
             
             for (Node* child : n->children) {
-                travers(child, depth + 1);
+                travers(child);
             }
         }
+
+
+
 
         string genStr(const int& len) {
             static const char alphanum[] =
@@ -123,6 +185,7 @@ class IR{
             return tmp_s;
         }
 
+
         string genTACS(const Node* n){
             //expression
             if(isArthemticOP(n->type)){
@@ -136,7 +199,17 @@ class IR{
                 currentBB->TACs.push_back(TAC(name,"","!",value));
                 return name;
             }
-
+            else if (n->type == "relop"){
+                auto it = n->children.begin();
+                Node* lhs = *it++;
+                Node* rhs = *it;
+                string str_lhs,str_rhs;
+                str_lhs = genTACS(lhs);
+                str_rhs = genTACS(rhs);
+                string name = genStr(2);
+                currentBB->TACs.push_back(TAC(name,str_lhs,n->value,str_rhs));
+                return name;
+            }
             //methodcall
             /*else if(n->type == "call"){
 
@@ -190,10 +263,10 @@ class IR{
         }
 
         void printIR(){
-            BasicBlock* tempBlk = rootBB;
+            BasicBlock* tempBlk = currentBB;
             while(tempBlk){
                 cout << "Block: " << tempBlk->name << endl;
-                for(TAC code: rootBB->TACs){
+                for(TAC code: tempBlk->TACs){
                     cout << "\t" <<code.to_str() << endl;
                 }
                 tempBlk = tempBlk->nextBlock;

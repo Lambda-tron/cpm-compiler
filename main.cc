@@ -73,7 +73,6 @@ int main(int argc, char **argv)
 					return -1;
 				}
 				IR IntermediateRP(root,st);
-				IntermediateRP.printIR();
 			}
 			catch (...)
 			{
