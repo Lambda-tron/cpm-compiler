@@ -7,18 +7,24 @@
 #include <string>
 #include <vector>
 
+using std::string;
+using std::vector;
+using std::cout;
+using std::endl;
+
 class SemanticAnalyzer {
 private:
     ST* symbolTable;
 public:
     int errorCount = 0;
-    SemanticAnalyzer(ST* st, Node* root) : symbolTable(st) {
+    SemanticAnalyzer(ST* st,const Node* root) : symbolTable(st) {
         analyze(root);
     }
+
     bool didReturn = false;
     int returnLineNo = -1;
 
-    void analyze(Node* node) {
+    void analyze(const Node* node) {
         bool openedScope = false;
         bool hasReturnType = false;
         
@@ -122,14 +128,14 @@ public:
 
     }
     //enter Scope
-    void enterScope(Node* n){
+    void enterScope(const Node* n){
         symbolTable->currentScope = symbolTable->currentScope->childrenScopes[symbolTable->currentScope->nextChildIndex];
         symbolTable->currentScope->parent->nextChildIndex++;
         symbolTable->currentScope->nextChildIndex = 0; 
     }
 
     //validate the definition
-    void validateDefiniation(Node* n){
+    void validateDefiniation(const Node* n){
         
         //return if we are not assigning anything at the definition
         if(n->children.size() < 2) return;
@@ -150,7 +156,7 @@ public:
     }
 
     //lookup if a variable has been declared in the currentScope or the one wrapping it.
-    Symbol* lookup(string symbolName) {
+    Symbol* lookup(const string& symbolName) {
         Scope* temp = symbolTable->currentScope; 
         while (temp != nullptr) { 
             for (int i = 0; i < temp->symbols.size(); i++) {
@@ -164,7 +170,7 @@ public:
     }
 
     //check if there are dublicate definiation in same scope.
-    bool checkDublicateDefinition(string varName){
+    bool checkDublicateDefinition(const string& varName){
         int numdef = 0;
         for (int i = 0; i < symbolTable->currentScope->symbols.size(); i++) {
             if (symbolTable->currentScope->symbols[i]->name == varName) {
@@ -175,7 +181,7 @@ public:
     }
 
     //cehck if the assingment is correct.
-    void assigmentCheck(Node* node) {
+    void assigmentCheck(const Node* node) {
         // assign must have exactly 2 children
         if (!node || node->children.size() != 2) return;
 
@@ -214,7 +220,7 @@ public:
     }
 
     //either we are accessing a ITEM in an array OR calling a function OR .length.
-    string getPostFixDatatype(Node* node) {
+    string getPostFixDatatype(const Node* node) {
 
         auto it = node->children.begin();
         //get the ID at the start
@@ -294,7 +300,7 @@ public:
     }
 
     //check the function datatype, parameters given.
-    string validateFunctionCall(Node* funcNode, string className = ""){
+    string validateFunctionCall(const Node* funcNode, string className = ""){
         /*
             main() : int {
                 Obj.func() <-funcmethcall
@@ -393,7 +399,7 @@ public:
     }
 
     //get a scope for a given class or method name
-    Scope* getClassScope(string scopeName){
+    Scope* getClassScope(const string& scopeName){
         for(int i = 0; i < symbolTable->rootScope->childrenScopes.size(); i++){
             if(symbolTable->rootScope->childrenScopes[i]->name == scopeName){
                 return symbolTable->rootScope->childrenScopes[i];
@@ -403,7 +409,7 @@ public:
     }
 
     //get a scope for a given method
-    Scope* getMethodScopeInSameClass(string methodName){
+    Scope* getMethodScopeInSameClass(const string& methodName){
         Scope* temp = symbolTable->currentScope;
         while(temp->parent){
             for(int i = 0; i < temp->childrenScopes.size(); i++){
@@ -433,7 +439,7 @@ public:
     }
 
     //get return rtp on arhemetics
-    string arthmetics(Node* opNode) {
+    string arthmetics(const Node* opNode) {
         auto it = opNode->children.begin();
         Node* left = *it++;
         Node* right = *it;
@@ -462,7 +468,7 @@ public:
     }
 
     //get return type on relop
-    string relop(Node* relNode){
+    string relop(const Node* relNode){
         auto it = relNode->children.begin();
         Node* left = *it++;
         Node* right = *it;
@@ -489,7 +495,8 @@ public:
         return "BOOL";
     }
 
-    string evalExprType(Node* n) {
+    //get the expr type
+    string evalExprType(const Node* n) {
 
         // Variables
         if (n->type == "ID") {
@@ -554,7 +561,8 @@ public:
         return n->type;
     }
 
-    Scope* getFuncFromDiffScope(Node* funcNode, string className){
+    //get functionf from diff class
+    Scope* getFuncFromDiffScope(const Node* funcNode, string className){
         Scope* foundClassTemp = nullptr;
         for(Scope* classScope: symbolTable->rootScope->childrenScopes){
             if(classScope->name == className){
@@ -578,6 +586,7 @@ public:
         return nullptr; 
     }
 
+    // ------- error functions -------
     void err_dead_code(const string& nodeType, const string& nodeValue, int lineno) {
         cerr << "Semantic Error (Line " << lineno
             << "): Unreachable code detected near '" << nodeType << " " << nodeValue << "'."
