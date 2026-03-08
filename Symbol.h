@@ -32,6 +32,15 @@ public:
     void insertScope(Scope* scope) {
         childrenScopes.push_back(scope);
     }  
+
+    ~Scope() {
+        for (Symbol* sym : symbols) {
+            delete sym;
+        }
+        for (Scope* child : childrenScopes) {
+            delete child;
+        }
+    }
 };
 
 class ST {
@@ -45,6 +54,11 @@ public:
         travers(rootNode);
         //printRecursive(rootScope);
     }
+
+    ~ST() {
+        delete rootScope;
+    }
+    //travers the tree and build the ST
     void travers(Node* n, int depth = 0) {
         bool openedScope = false;
         if (n->type == "program") {
@@ -71,10 +85,11 @@ public:
             currentScope->insertSymbol(new Symbol(n->value, n->type));
         }
         else if (n->type == "type") {
+
             if (!currentScope->symbols.empty()) {
                 if (currentScope->symbols.back()->type == "UNDEFINED") {
                     currentScope->symbols.back()->type = n->value;
-                }else{
+                }else if(currentScope->parent->symbols.back()->type == "UNDEFINED"){
                     currentScope->parent->symbols.back()->type = n->value;
                 }
             } else if (currentScope->parent && currentScope->parent->symbols.back()->type == "UNDEFINED") {
@@ -89,6 +104,7 @@ public:
         }
     }
     
+    //create a scope and enter it, used only when building tehe ST
     void createAndEnterScope(Node* n) {
         Scope* sc = new Scope(n->value, currentScope, currentScope->symbols.size());
         Symbol* sy = new Symbol(n->value, n->type);
@@ -97,12 +113,14 @@ public:
         currentScope = sc;
     }
 
+    //leave scope when traversing the tree
     void leave_scope() {
         if (currentScope->parent != nullptr) {
             currentScope = currentScope->parent;
         }
     }
 
+    //print the symbol table
     void printRecursive(Scope* s, int depth = 0) {
         if (s == nullptr) return;
 
@@ -128,9 +146,6 @@ public:
             printRecursive(child, depth + 1);
         }
     }
-
-    
-
 };
 
 #endif

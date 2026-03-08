@@ -1,0 +1,397 @@
+digraph {
+n0 [label="program:"];
+n1 [label="GlobalList:"];
+n2 [label="class:MyClass"];
+n3 [label="classAttrbt:"];
+n4 [label="v_var:i1"];
+n5 [label="type:INT"];
+n4 -> n5
+n3 -> n4
+n6 [label="var:i2"];
+n7 [label="type:INT"];
+n6 -> n7
+n3 -> n6
+n8 [label="v_var:b1"];
+n9 [label="type:BOOL"];
+n8 -> n9
+n3 -> n8
+n10 [label="var:b2"];
+n11 [label="type:BOOL"];
+n10 -> n11
+n3 -> n10
+n12 [label="v_var:ia1"];
+n13 [label="type:arr_INT"];
+n12 -> n13
+n3 -> n12
+n14 [label="var:ia2"];
+n15 [label="type:arr_INT"];
+n14 -> n15
+n3 -> n14
+n16 [label="var:c1"];
+n17 [label="type:ClassDatatest"];
+n16 -> n17
+n3 -> n16
+n18 [label="var:c2"];
+n19 [label="type:ClassDatatest"];
+n18 -> n19
+n3 -> n18
+n20 [label="method:semantically_incorrect_expressions"];
+n21 [label="arg_method:"];
+n20 -> n21
+n22 [label="type:BOOL"];
+n20 -> n22
+n23 [label="Stmtblock:"];
+n24 [label="stmtList:"];
+n25 [label="assign:"];
+n26 [label="ID:i1"];
+n25 -> n26
+n27 [label="PLUSOP:"];
+n28 [label="ID:i1"];
+n27 -> n28
+n29 [label="ID:b1"];
+n27 -> n29
+n25 -> n27
+n24 -> n25
+n30 [label="assign:"];
+n31 [label="ID:i1"];
+n30 -> n31
+n32 [label="PLUSOP:"];
+n33 [label="ID:i1"];
+n32 -> n33
+n34 [label="ID:ia1"];
+n32 -> n34
+n30 -> n32
+n24 -> n30
+n35 [label="assign:"];
+n36 [label="ID:i1"];
+n35 -> n36
+n37 [label="PLUSOP:"];
+n38 [label="ID:i1"];
+n37 -> n38
+n39 [label="ID:c1"];
+n37 -> n39
+n35 -> n37
+n24 -> n35
+n40 [label="assign:"];
+n41 [label="ID:i1"];
+n40 -> n41
+n42 [label="PLUSOP:"];
+n43 [label="ID:b1"];
+n42 -> n43
+n44 [label="ID:b1"];
+n42 -> n44
+n40 -> n42
+n24 -> n40
+n45 [label="assign:"];
+n46 [label="ID:i1"];
+n45 -> n46
+n47 [label="PLUSOP:"];
+n48 [label="ID:ia1"];
+n47 -> n48
+n49 [label="ID:ia1"];
+n47 -> n49
+n45 -> n47
+n24 -> n45
+n50 [label="assign:"];
+n51 [label="ID:i1"];
+n50 -> n51
+n52 [label="PLUSOP:"];
+n53 [label="ID:ia1"];
+n52 -> n53
+n54 [label="postfix:"];
+n55 [label="ID:ia1"];
+n54 -> n55
+n56 [label="arr_access:"];
+n57 [label="INT:0"];
+n56 -> n57
+n54 -> n56
+n52 -> n54
+n50 -> n52
+n24 -> n50
+n58 [label="assign:"];
+n59 [label="ID:i1"];
+n58 -> n59
+n60 [label="PLUSOP:"];
+n61 [label="ID:c1"];
+n60 -> n61
+n62 [label="ID:c1"];
+n60 -> n62
+n58 -> n60
+n24 -> n58
+n63 [label="assign:"];
+n64 [label="ID:i1"];
+n63 -> n64
+n65 [label="and:"];
+n66 [label="ID:c1"];
+n65 -> n66
+n67 [label="ID:c1"];
+n65 -> n67
+n63 -> n65
+n24 -> n63
+n68 [label="assign:"];
+n69 [label="ID:i1"];
+n68 -> n69
+n70 [label="or:"];
+n71 [label="ID:c1"];
+n70 -> n71
+n72 [label="ID:c1"];
+n70 -> n72
+n68 -> n70
+n24 -> n68
+n73 [label="assign:"];
+n74 [label="ID:i1"];
+n73 -> n74
+n75 [label="relop:<"];
+n76 [label="ID:c1"];
+n75 -> n76
+n77 [label="ID:c1"];
+n75 -> n77
+n73 -> n75
+n24 -> n73
+n78 [label="assign:"];
+n79 [label="ID:b1"];
+n78 -> n79
+n80 [label="PLUSOP:"];
+n81 [label="ID:b1"];
+n80 -> n81
+n82 [label="ID:b1"];
+n80 -> n82
+n78 -> n80
+n24 -> n78
+n83 [label="assign:"];
+n84 [label="ID:b1"];
+n83 -> n84
+n85 [label="PLUSOP:"];
+n86 [label="ID:b1"];
+n85 -> n86
+n87 [label="ID:ia1"];
+n85 -> n87
+n83 -> n85
+n24 -> n83
+n88 [label="assign:"];
+n89 [label="ID:b1"];
+n88 -> n89
+n90 [label="and:"];
+n91 [label="ID:b1"];
+n90 -> n91
+n92 [label="ID:ia1"];
+n90 -> n92
+n88 -> n90
+n24 -> n88
+n93 [label="assign:"];
+n94 [label="ID:b1"];
+n93 -> n94
+n95 [label="relop:="];
+n96 [label="ID:b1"];
+n95 -> n96
+n97 [label="ID:c1"];
+n95 -> n97
+n93 -> n95
+n24 -> n93
+n98 [label="assign:"];
+n99 [label="ID:ia1"];
+n98 -> n99
+n100 [label="PLUSOP:"];
+n101 [label="ID:ia1"];
+n100 -> n101
+n102 [label="ID:ia2"];
+n100 -> n102
+n98 -> n100
+n24 -> n98
+n103 [label="assign:"];
+n104 [label="ID:ia1"];
+n103 -> n104
+n105 [label="and:"];
+n106 [label="ID:ia1"];
+n105 -> n106
+n107 [label="ID:ia2"];
+n105 -> n107
+n103 -> n105
+n24 -> n103
+n108 [label="assign:"];
+n109 [label="ID:b1"];
+n108 -> n109
+n110 [label="relop:<"];
+n111 [label="ID:b1"];
+n110 -> n111
+n112 [label="ID:b2"];
+n110 -> n112
+n108 -> n110
+n24 -> n108
+n113 [label="assign:"];
+n114 [label="ID:b1"];
+n113 -> n114
+n115 [label="not:"];
+n116 [label="ID:i1"];
+n115 -> n116
+n113 -> n115
+n24 -> n113
+n117 [label="return:"];
+n118 [label="BOOL:true"];
+n117 -> n118
+n24 -> n117
+n23 -> n24
+n20 -> n23
+n3 -> n20
+n119 [label="method:operator_test_work"];
+n120 [label="arg_method:"];
+n119 -> n120
+n121 [label="type:BOOL"];
+n119 -> n121
+n122 [label="Stmtblock:"];
+n123 [label="stmtList:"];
+n124 [label="assign:"];
+n125 [label="ID:i1"];
+n124 -> n125
+n126 [label="PLUSOP:"];
+n127 [label="ID:i1"];
+n126 -> n127
+n128 [label="ID:i2"];
+n126 -> n128
+n124 -> n126
+n123 -> n124
+n129 [label="assign:"];
+n130 [label="ID:i1"];
+n129 -> n130
+n131 [label="PLUSOP:"];
+n132 [label="postfix:"];
+n133 [label="ID:ia1"];
+n132 -> n133
+n134 [label="arr_access:"];
+n135 [label="INT:1"];
+n134 -> n135
+n132 -> n134
+n131 -> n132
+n136 [label="postfix:"];
+n137 [label="ID:ia2"];
+n136 -> n137
+n138 [label="arr_access:"];
+n139 [label="INT:2"];
+n138 -> n139
+n136 -> n138
+n131 -> n136
+n129 -> n131
+n123 -> n129
+n140 [label="assign:"];
+n141 [label="ID:i1"];
+n140 -> n141
+n142 [label="PLUSOP:"];
+n143 [label="postfix:"];
+n144 [label="postfix:"];
+n145 [label="ID:c1"];
+n144 -> n145
+n146 [label="funcMethcall:get_trash"];
+n147 [label="args:"];
+n146 -> n147
+n144 -> n146
+n143 -> n144
+n148 [label="arr_access:"];
+n149 [label="INT:2"];
+n148 -> n149
+n143 -> n148
+n142 -> n143
+n150 [label="ID:i2"];
+n142 -> n150
+n140 -> n142
+n123 -> n140
+n151 [label="assign:"];
+n152 [label="ID:b1"];
+n151 -> n152
+n153 [label="and:"];
+n154 [label="ID:b1"];
+n153 -> n154
+n155 [label="ID:b2"];
+n153 -> n155
+n151 -> n153
+n123 -> n151
+n156 [label="assign:"];
+n157 [label="ID:b1"];
+n156 -> n157
+n158 [label="relop:<"];
+n159 [label="ID:i1"];
+n158 -> n159
+n160 [label="ID:i2"];
+n158 -> n160
+n156 -> n158
+n123 -> n156
+n161 [label="return:"];
+n162 [label="BOOL:true"];
+n161 -> n162
+n123 -> n161
+n122 -> n123
+n119 -> n122
+n3 -> n119
+n2 -> n3
+n1 -> n2
+n163 [label="class:ClassDatatest"];
+n164 [label="classAttrbt:"];
+n165 [label="var:trash"];
+n166 [label="type:arr_INT"];
+n165 -> n166
+n164 -> n165
+n167 [label="method:get_trash"];
+n168 [label="arg_method:"];
+n167 -> n168
+n169 [label="type:arr_INT"];
+n167 -> n169
+n170 [label="Stmtblock:"];
+n171 [label="stmtList:"];
+n172 [label="return:"];
+n173 [label="ID:trash"];
+n172 -> n173
+n171 -> n172
+n170 -> n171
+n167 -> n170
+n164 -> n167
+n163 -> n164
+n1 -> n163
+n0 -> n1
+n174 [label="method:main"];
+n175 [label="type:INT"];
+n174 -> n175
+n176 [label="Stmtblock:"];
+n177 [label="stmtList:"];
+n178 [label="print:"];
+n179 [label="postfix:"];
+n180 [label="call:MyClass"];
+n181 [label="args:"];
+n180 -> n181
+n179 -> n180
+n182 [label="funcMethcall:semantically_incorrect_expressions"];
+n183 [label="args:"];
+n182 -> n183
+n179 -> n182
+n178 -> n179
+n177 -> n178
+n184 [label="print:"];
+n185 [label="postfix:"];
+n186 [label="call:MyClass"];
+n187 [label="args:"];
+n186 -> n187
+n185 -> n186
+n188 [label="funcMethcall:operator_test_work"];
+n189 [label="args:"];
+n188 -> n189
+n185 -> n188
+n184 -> n185
+n177 -> n184
+n190 [label="print:"];
+n191 [label="postfix:"];
+n192 [label="call:ClassDatatest"];
+n193 [label="args:"];
+n192 -> n193
+n191 -> n192
+n194 [label="funcMethcall:get_trash"];
+n195 [label="args:"];
+n194 -> n195
+n191 -> n194
+n190 -> n191
+n177 -> n190
+n196 [label="return:"];
+n197 [label="INT:0"];
+n196 -> n197
+n177 -> n196
+n176 -> n177
+n174 -> n176
+n0 -> n174
+}
