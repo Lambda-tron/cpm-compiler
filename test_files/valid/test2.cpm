@@ -2,7 +2,7 @@ main(): int {
 	volatile x : float := 1.0 / 7.0
 	volatile y : float := (10.0 + x) * 2.0
 	volatile z : float := y - x * x
-
+	x := 3.3
 	print(x)
 	print(y)
 	print(z)

@@ -52,7 +52,7 @@ public:
     ST(Node* rootNodeptr) {
         rootNode = rootNodeptr;
         travers(rootNode);
-        //printRecursive(rootScope);
+        printRecursive(rootScope);
     }
 
     ~ST() {

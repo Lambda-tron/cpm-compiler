@@ -10,10 +10,11 @@
 class SemanticAnalyzer {
 private:
     ST* symbolTable;
-    int errorCount = 0;
-
 public:
-    SemanticAnalyzer(ST* st) : symbolTable(st) {}
+    int errorCount = 0;
+    SemanticAnalyzer(ST* st, Node* root) : symbolTable(st) {
+        analyze(root);
+    }
     bool didReturn = false;
     int returnLineNo = -1;
 
@@ -118,6 +119,7 @@ public:
             returnLineNo=-1;
            
         }
+
     }
     //enter Scope
     void enterScope(Node* n){
@@ -770,12 +772,6 @@ public:
             << "', got '" << actualType << "'."
             << endl;
         errorCount++;
-    }
-
-    void printTotalErrors(){
-        if(errorCount>0){
-            cout << "Total Errors: " << errorCount << endl;
-        }
     }
 };
 
