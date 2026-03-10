@@ -72,7 +72,7 @@ int main(int argc, char **argv)
 					cout << "Total Errors: " << analyzer.errorCount << endl;
 					return -1;
 				}
-				//IR IntermediateRP(root,st);
+				IR IntermediateRP(root,st);
 			}
 			catch (...)
 			{

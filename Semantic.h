@@ -9,7 +9,6 @@
 
 using std::string;
 using std::vector;
-using std::cout;
 using std::endl;
 
 class SemanticAnalyzer {
@@ -86,7 +85,13 @@ public:
             openedScope = true;
         }
         else if (node->type == "return"){
-            Symbol* funcSymbol = symbolTable->currentScope->parent->symbols[symbolTable->currentScope->symbolIndexInParentTable];
+            Symbol* funcSymbol;
+            Scope* tmpScope = symbolTable->currentScope;
+            funcSymbol = tmpScope->parent->symbols[tmpScope->symbolIndexInParentTable];
+            while(funcSymbol->kind != "method"){
+                tmpScope = tmpScope->parent;
+                funcSymbol = tmpScope->parent->symbols[tmpScope->symbolIndexInParentTable];
+            }
             
             if(funcSymbol->type != "VOID"){
                 Node* returned = *node->children.begin();
@@ -127,6 +132,8 @@ public:
         }
 
     }
+
+
     //enter Scope
     void enterScope(const Node* n){
         symbolTable->currentScope = symbolTable->currentScope->childrenScopes[symbolTable->currentScope->nextChildIndex];
@@ -143,7 +150,6 @@ public:
         auto it = n->children.begin();
         Node* dataType = *it++;
         Node* value = *it;
-        //cout << "validating: " << n->type << ":" << n->value << endl;
         string nodeDT = evalExprType(value);
         //datatypes can only be INT,BOOL,FLOAT,arr_INT,arr_FLOAT
         if(dataType->value != nodeDT){
@@ -199,7 +205,6 @@ public:
         } 
         else if (lhs->type == "postfix") {
             targetType = getPostFixDatatype(lhs);
-            //cout << targetType << "LEFTSIDE LINE: " << lhs->lineno << endl;
             if(targetType == "UNKOWN"){return;}
         } 
         else {
@@ -228,7 +233,6 @@ public:
         //get the POSTFIX could be arr_access or length or method call
         Node* post = *it;
         
-        //cout << "LINE: " << base->lineno << ", BASE: " << base->type << ":" << base->value << ", POST:" << post->type << ":" << post->value << endl; 
         string baseType = base->type;
 
         if(base->type == "ID"){
@@ -239,6 +243,7 @@ public:
                 return "UNKOWN";
             }
             baseType = baseSym->type;
+
         }
         else if(base->type == "call"){
             string funcType = validateFunctionCall(base);
@@ -394,7 +399,6 @@ public:
                 err_argument_type(funcScope->name, symbolIndex, paramType, argType, argument->lineno);
             }
         }
-        //cout << "now will return " << funcSymbol->type << endl;
         return funcSymbol->type;
     }
 
@@ -566,12 +570,10 @@ public:
         Scope* foundClassTemp = nullptr;
         for(Scope* classScope: symbolTable->rootScope->childrenScopes){
             if(classScope->name == className){
-                //cout << "FOUND CLASS " << className << endl;
                 foundClassTemp = classScope;
                 className = classScope->name;
                 //get the funcscope if the class scope was found
                 for(Scope* for_funcSccope: foundClassTemp->childrenScopes){
-                    //cout << "symbol " << for_funcSccope->name << endl;
                     if(for_funcSccope->name == funcNode->value){
                         return for_funcSccope;
                     }  

@@ -89,7 +89,7 @@ class ST {
                 }
             }
             for (Node* child : n->children) {
-                travers(child);
+                traverse(child);
             }
             if (openedScope) {
                 leave_scope();

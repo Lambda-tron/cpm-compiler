@@ -1,0 +1,297 @@
+digraph {
+n0 [label="program:"];
+n1 [label="GlobalList:"];
+n2 [label="class:test"];
+n3 [label="classAttrbt:"];
+n4 [label="v_var:i"];
+n5 [label="type:INT"];
+n4 -> n5
+n6 [label="INT:0"];
+n4 -> n6
+n3 -> n4
+n7 [label="v_var:total"];
+n8 [label="type:INT"];
+n7 -> n8
+n9 [label="INT:0"];
+n7 -> n9
+n3 -> n7
+n10 [label="method:testo"];
+n11 [label="arg_method:"];
+n12 [label="param:par"];
+n13 [label="type:INT"];
+n12 -> n13
+n14 [label="param:mi"];
+n15 [label="type:FLOAT"];
+n14 -> n15
+n12 -> n14
+n11 -> n12
+n10 -> n11
+n16 [label="type:INT"];
+n10 -> n16
+n17 [label="Stmtblock:"];
+n18 [label="stmtList:"];
+n19 [label="v_var:list"];
+n20 [label="type:arr_FLOAT"];
+n19 -> n20
+n21 [label="init_array:"];
+n22 [label="type:FLOAT"];
+n21 -> n22
+n23 [label="values:"];
+n24 [label="FLOAT:5.0"];
+n23 -> n24
+n25 [label="FLOAT:6.0"];
+n23 -> n25
+n26 [label="FLOAT:1.0"];
+n23 -> n26
+n27 [label="FLOAT:2.4"];
+n23 -> n27
+n28 [label="FLOAT:2.3"];
+n23 -> n28
+n29 [label="FLOAT:2.5"];
+n23 -> n29
+n30 [label="FLOAT:9.0"];
+n23 -> n30
+n31 [label="FLOAT:14.0"];
+n23 -> n31
+n32 [label="FLOAT:2.0"];
+n23 -> n32
+n33 [label="FLOAT:15.0"];
+n23 -> n33
+n34 [label="FLOAT:6.0"];
+n23 -> n34
+n35 [label="FLOAT:7.0"];
+n23 -> n35
+n36 [label="FLOAT:8.0"];
+n23 -> n36
+n37 [label="FLOAT:97.0"];
+n23 -> n37
+n21 -> n23
+n19 -> n21
+n18 -> n19
+n38 [label="v_var:n"];
+n39 [label="type:INT"];
+n38 -> n39
+n40 [label="postfix:"];
+n41 [label="ID:list"];
+n40 -> n41
+n42 [label="length:"];
+n40 -> n42
+n38 -> n40
+n18 -> n38
+n43 [label="v_var:i"];
+n44 [label="type:INT"];
+n43 -> n44
+n45 [label="INT:0"];
+n43 -> n45
+n18 -> n43
+n46 [label="FOR:FOR"];
+n47 [label="assign:"];
+n48 [label="ID:i"];
+n47 -> n48
+n49 [label="INT:0"];
+n47 -> n49
+n46 -> n47
+n50 [label="relop:<"];
+n51 [label="ID:i"];
+n50 -> n51
+n52 [label="ID:n"];
+n50 -> n52
+n46 -> n50
+n53 [label="assign:"];
+n54 [label="ID:i"];
+n53 -> n54
+n55 [label="PLUSOP:"];
+n56 [label="ID:i"];
+n55 -> n56
+n57 [label="INT:1"];
+n55 -> n57
+n53 -> n55
+n46 -> n53
+n58 [label="Stmtblock:"];
+n59 [label="stmtList:"];
+n60 [label="print:"];
+n61 [label="postfix:"];
+n62 [label="ID:list"];
+n61 -> n62
+n63 [label="arr_access:"];
+n64 [label="ID:i"];
+n63 -> n64
+n61 -> n63
+n60 -> n61
+n59 -> n60
+n58 -> n59
+n46 -> n58
+n18 -> n46
+n65 [label="return:"];
+n66 [label="INT:0"];
+n65 -> n66
+n18 -> n65
+n17 -> n18
+n10 -> n17
+n3 -> n10
+n67 [label="method:func"];
+n68 [label="arg_method:"];
+n67 -> n68
+n69 [label="type:INT"];
+n67 -> n69
+n70 [label="Stmtblock:"];
+n71 [label="stmtList:"];
+n72 [label="v_var:n"];
+n73 [label="type:INT"];
+n72 -> n73
+n71 -> n72
+n74 [label="read:"];
+n75 [label="ID:n"];
+n74 -> n75
+n71 -> n74
+n76 [label="v_var:x"];
+n77 [label="type:INT"];
+n76 -> n77
+n78 [label="INT:1"];
+n76 -> n78
+n71 -> n76
+n79 [label="v_var:i"];
+n80 [label="type:INT"];
+n79 -> n80
+n81 [label="INT:2"];
+n79 -> n81
+n71 -> n79
+n82 [label="FOR:FOR"];
+n83 [label="assign:"];
+n84 [label="ID:i"];
+n83 -> n84
+n85 [label="INT:2"];
+n83 -> n85
+n82 -> n83
+n86 [label="relop:<="];
+n87 [label="ID:i"];
+n86 -> n87
+n88 [label="ID:n"];
+n86 -> n88
+n82 -> n86
+n89 [label="assign:"];
+n90 [label="ID:i"];
+n89 -> n90
+n91 [label="PLUSOP:"];
+n92 [label="ID:i"];
+n91 -> n92
+n93 [label="INT:1"];
+n91 -> n93
+n89 -> n91
+n82 -> n89
+n94 [label="Stmtblock:"];
+n95 [label="stmtList:"];
+n96 [label="assign:"];
+n97 [label="ID:x"];
+n96 -> n97
+n98 [label="MULTOP:"];
+n99 [label="ID:x"];
+n98 -> n99
+n100 [label="ID:i"];
+n98 -> n100
+n96 -> n98
+n95 -> n96
+n94 -> n95
+n82 -> n94
+n71 -> n82
+n101 [label="IF:IF"];
+n102 [label="relop:<"];
+n103 [label="ID:x"];
+n102 -> n103
+n104 [label="INT:3"];
+n102 -> n104
+n101 -> n102
+n105 [label="Stmtblock:"];
+n106 [label="stmtList:"];
+n107 [label="assign:"];
+n108 [label="ID:x"];
+n107 -> n108
+n109 [label="INT:0"];
+n107 -> n109
+n106 -> n107
+n105 -> n106
+n101 -> n105
+n71 -> n101
+n110 [label="print:"];
+n111 [label="ID:x"];
+n110 -> n111
+n71 -> n110
+n112 [label="return:"];
+n113 [label="INT:0"];
+n112 -> n113
+n71 -> n112
+n70 -> n71
+n67 -> n70
+n3 -> n67
+n2 -> n3
+n1 -> n2
+n0 -> n1
+n114 [label="method:main"];
+n115 [label="type:INT"];
+n114 -> n115
+n116 [label="Stmtblock:"];
+n117 [label="stmtList:"];
+n118 [label="var:object"];
+n119 [label="type:test"];
+n118 -> n119
+n120 [label="call:test"];
+n121 [label="args:"];
+n120 -> n121
+n118 -> n120
+n117 -> n118
+n122 [label="v_var:n"];
+n123 [label="type:INT"];
+n122 -> n123
+n124 [label="postfix:"];
+n125 [label="ID:object"];
+n124 -> n125
+n126 [label="funcMethcall:testo"];
+n127 [label="args:"];
+n128 [label="INT:4"];
+n127 -> n128
+n129 [label="FLOAT:5.4"];
+n127 -> n129
+n126 -> n127
+n124 -> n126
+n122 -> n124
+n117 -> n122
+n130 [label="read:"];
+n131 [label="ID:n"];
+n130 -> n131
+n117 -> n130
+n132 [label="IF:IF"];
+n133 [label="relop:<"];
+n134 [label="ID:n"];
+n133 -> n134
+n135 [label="INT:3"];
+n133 -> n135
+n132 -> n133
+n136 [label="Stmtblock:"];
+n137 [label="stmtList:"];
+n138 [label="return:"];
+n139 [label="INT:0"];
+n138 -> n139
+n137 -> n138
+n136 -> n137
+n132 -> n136
+n117 -> n132
+n140 [label="v_var:x"];
+n141 [label="type:INT"];
+n140 -> n141
+n142 [label="INT:1"];
+n140 -> n142
+n117 -> n140
+n143 [label="v_var:i"];
+n144 [label="type:INT"];
+n143 -> n144
+n145 [label="INT:2"];
+n143 -> n145
+n117 -> n143
+n146 [label="return:"];
+n147 [label="INT:0"];
+n146 -> n147
+n117 -> n146
+n116 -> n117
+n114 -> n116
+n0 -> n114
+}
