@@ -3,7 +3,7 @@
 #include "Symbol.h"
 #include "Semantic.h"
 #include "ir.h"
-
+#include "CodeGen.h"
 extern Node *root;
 extern FILE *yyin;
 extern int yylineno;
@@ -72,7 +72,9 @@ int main(int argc, char **argv)
 					cout << "Total Errors: " << analyzer.errorCount << endl;
 					return -1;
 				}
-				IR IntermediateRP(root,st);
+				IR ir(root,st);
+				CodeGen cg(ir.getBlocks(), ir.getClassAttributes());
+				cg.generateCPP("out.cpp");
 			}
 			catch (...)
 			{
