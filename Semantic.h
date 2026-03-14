@@ -7,17 +7,23 @@
 #include <string>
 #include <vector>
 
+using std::string;
+using std::vector;
+using std::endl;
+
 class SemanticAnalyzer {
 private:
     ST* symbolTable;
-    int errorCount = 0;
-
 public:
-    SemanticAnalyzer(ST* st) : symbolTable(st) {}
+    int errorCount = 0;
+    SemanticAnalyzer(ST* st,const Node* root) : symbolTable(st) {
+        analyze(root);
+    }
+
     bool didReturn = false;
     int returnLineNo = -1;
 
-    void analyze(Node* node) {
+    void analyze(const Node* node) {
         bool openedScope = false;
         bool hasReturnType = false;
         
@@ -79,7 +85,13 @@ public:
             openedScope = true;
         }
         else if (node->type == "return"){
-            Symbol* funcSymbol = symbolTable->currentScope->parent->symbols[symbolTable->currentScope->symbolIndexInParentTable];
+            Symbol* funcSymbol;
+            Scope* tmpScope = symbolTable->currentScope;
+            funcSymbol = tmpScope->parent->symbols[tmpScope->symbolIndexInParentTable];
+            while(funcSymbol->kind != "method"){
+                tmpScope = tmpScope->parent;
+                funcSymbol = tmpScope->parent->symbols[tmpScope->symbolIndexInParentTable];
+            }
             
             if(funcSymbol->type != "VOID"){
                 Node* returned = *node->children.begin();
@@ -118,16 +130,19 @@ public:
             returnLineNo=-1;
            
         }
+
     }
+
+
     //enter Scope
-    void enterScope(Node* n){
+    void enterScope(const Node* n){
         symbolTable->currentScope = symbolTable->currentScope->childrenScopes[symbolTable->currentScope->nextChildIndex];
         symbolTable->currentScope->parent->nextChildIndex++;
         symbolTable->currentScope->nextChildIndex = 0; 
     }
 
     //validate the definition
-    void validateDefiniation(Node* n){
+    void validateDefiniation(const Node* n){
         
         //return if we are not assigning anything at the definition
         if(n->children.size() < 2) return;
@@ -135,7 +150,6 @@ public:
         auto it = n->children.begin();
         Node* dataType = *it++;
         Node* value = *it;
-        //cout << "validating: " << n->type << ":" << n->value << endl;
         string nodeDT = evalExprType(value);
         //datatypes can only be INT,BOOL,FLOAT,arr_INT,arr_FLOAT
         if(dataType->value != nodeDT){
@@ -148,7 +162,7 @@ public:
     }
 
     //lookup if a variable has been declared in the currentScope or the one wrapping it.
-    Symbol* lookup(string symbolName) {
+    Symbol* lookup(const string& symbolName) {
         Scope* temp = symbolTable->currentScope; 
         while (temp != nullptr) { 
             for (int i = 0; i < temp->symbols.size(); i++) {
@@ -162,7 +176,7 @@ public:
     }
 
     //check if there are dublicate definiation in same scope.
-    bool checkDublicateDefinition(string varName){
+    bool checkDublicateDefinition(const string& varName){
         int numdef = 0;
         for (int i = 0; i < symbolTable->currentScope->symbols.size(); i++) {
             if (symbolTable->currentScope->symbols[i]->name == varName) {
@@ -173,7 +187,7 @@ public:
     }
 
     //cehck if the assingment is correct.
-    void assigmentCheck(Node* node) {
+    void assigmentCheck(const Node* node) {
         // assign must have exactly 2 children
         if (!node || node->children.size() != 2) return;
 
@@ -191,7 +205,6 @@ public:
         } 
         else if (lhs->type == "postfix") {
             targetType = getPostFixDatatype(lhs);
-            //cout << targetType << "LEFTSIDE LINE: " << lhs->lineno << endl;
             if(targetType == "UNKOWN"){return;}
         } 
         else {
@@ -212,7 +225,7 @@ public:
     }
 
     //either we are accessing a ITEM in an array OR calling a function OR .length.
-    string getPostFixDatatype(Node* node) {
+    string getPostFixDatatype(const Node* node) {
 
         auto it = node->children.begin();
         //get the ID at the start
@@ -220,7 +233,6 @@ public:
         //get the POSTFIX could be arr_access or length or method call
         Node* post = *it;
         
-        //cout << "LINE: " << base->lineno << ", BASE: " << base->type << ":" << base->value << ", POST:" << post->type << ":" << post->value << endl; 
         string baseType = base->type;
 
         if(base->type == "ID"){
@@ -231,6 +243,7 @@ public:
                 return "UNKOWN";
             }
             baseType = baseSym->type;
+
         }
         else if(base->type == "call"){
             string funcType = validateFunctionCall(base);
@@ -292,7 +305,7 @@ public:
     }
 
     //check the function datatype, parameters given.
-    string validateFunctionCall(Node* funcNode, string className = ""){
+    string validateFunctionCall(const Node* funcNode, string className = ""){
         /*
             main() : int {
                 Obj.func() <-funcmethcall
@@ -386,12 +399,11 @@ public:
                 err_argument_type(funcScope->name, symbolIndex, paramType, argType, argument->lineno);
             }
         }
-        //cout << "now will return " << funcSymbol->type << endl;
         return funcSymbol->type;
     }
 
     //get a scope for a given class or method name
-    Scope* getClassScope(string scopeName){
+    Scope* getClassScope(const string& scopeName){
         for(int i = 0; i < symbolTable->rootScope->childrenScopes.size(); i++){
             if(symbolTable->rootScope->childrenScopes[i]->name == scopeName){
                 return symbolTable->rootScope->childrenScopes[i];
@@ -401,7 +413,7 @@ public:
     }
 
     //get a scope for a given method
-    Scope* getMethodScopeInSameClass(string methodName){
+    Scope* getMethodScopeInSameClass(const string& methodName){
         Scope* temp = symbolTable->currentScope;
         while(temp->parent){
             for(int i = 0; i < temp->childrenScopes.size(); i++){
@@ -431,7 +443,7 @@ public:
     }
 
     //get return rtp on arhemetics
-    string arthmetics(Node* opNode) {
+    string arthmetics(const Node* opNode) {
         auto it = opNode->children.begin();
         Node* left = *it++;
         Node* right = *it;
@@ -460,7 +472,7 @@ public:
     }
 
     //get return type on relop
-    string relop(Node* relNode){
+    string relop(const Node* relNode){
         auto it = relNode->children.begin();
         Node* left = *it++;
         Node* right = *it;
@@ -487,7 +499,8 @@ public:
         return "BOOL";
     }
 
-    string evalExprType(Node* n) {
+    //get the expr type
+    string evalExprType(const Node* n) {
 
         // Variables
         if (n->type == "ID") {
@@ -552,16 +565,15 @@ public:
         return n->type;
     }
 
-    Scope* getFuncFromDiffScope(Node* funcNode, string className){
+    //get functionf from diff class
+    Scope* getFuncFromDiffScope(const Node* funcNode, string className){
         Scope* foundClassTemp = nullptr;
         for(Scope* classScope: symbolTable->rootScope->childrenScopes){
             if(classScope->name == className){
-                //cout << "FOUND CLASS " << className << endl;
                 foundClassTemp = classScope;
                 className = classScope->name;
                 //get the funcscope if the class scope was found
                 for(Scope* for_funcSccope: foundClassTemp->childrenScopes){
-                    //cout << "symbol " << for_funcSccope->name << endl;
                     if(for_funcSccope->name == funcNode->value){
                         return for_funcSccope;
                     }  
@@ -576,6 +588,7 @@ public:
         return nullptr; 
     }
 
+    // ------- error functions -------
     void err_dead_code(const string& nodeType, const string& nodeValue, int lineno) {
         cerr << "Semantic Error (Line " << lineno
             << "): Unreachable code detected near '" << nodeType << " " << nodeValue << "'."
@@ -770,12 +783,6 @@ public:
             << "', got '" << actualType << "'."
             << endl;
         errorCount++;
-    }
-
-    void printTotalErrors(){
-        if(errorCount>0){
-            cout << "Total Errors: " << errorCount << endl;
-        }
     }
 };
 

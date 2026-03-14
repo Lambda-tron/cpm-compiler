@@ -1,0 +1,34 @@
+digraph CFG {
+    node [shape=box];
+    n0 [label="Block: main\lobject := new test\lobject := new test\ln := new INT\lparam := 4\lparam := 5.4\lwn := testo call 2\ln := wn\lread n\lYk := n < 3\l"];
+    n1 [label="Block: PYr\lcondition: ifFalse Yk goto EAY\l"];
+    n2 [label="Block: dFY\lreturn 0\l"];
+    n3 [label="Block: EAY\lx := new INT\lx := 1\li := new INT\li := 2\lreturn 0\l"];
+    n4 [label="Block: func\lClass: test\lAttributes:\li : INT := 0\ltotal : INT := 0\ln := new INT\lread n\lx := new INT\lx := 1\li := new INT\li := 2\li := 2\lwv := i <= n\l"];
+    n5 [label="Block: LcX\lcondition: ifFalse wv goto jBp\l"];
+    n6 [label="Block: dzM\lUT := x * i\lx := UT\ljv := i + 1\li := jv\l"];
+    n7 [label="Block: jBp\lSY := x < 3\l"];
+    n8 [label="Block: WjV\lcondition: ifFalse SY goto ZJB\l"];
+    n9 [label="Block: kjl\lx := 0\l"];
+    n10 [label="Block: ZJB\lprint x\lreturn 0\l"];
+    n11 [label="Block: testo\lClass: test\lAttributes:\li : INT := 0\ltotal : INT := 0\lpar := paramINT\lpar := mi\llist := new arr_FLOAT[14]\ln := new INT\lvB := list.length\ln := vB\li := new INT\li := 0\li := 0\lvQ := i < n\l"];
+    n12 [label="Block: Uvf\lcondition: ifFalse vQ goto uGX\l"];
+    n13 [label="Block: Fcp\lNi := list[i]\lprint Ni\lNU := i + 1\li := NU\l"];
+    n14 [label="Block: uGX\lreturn 0\l"];
+    n0 -> n1 [label="true"];
+    n1 -> n3 [label="true"];
+    n1 -> n2 [label="false"];
+    n2 -> n3 [label="true"];
+    n4 -> n5 [label="true"];
+    n5 -> n7 [label="true"];
+    n5 -> n6 [label="false"];
+    n6 -> n5 [label="true"];
+    n7 -> n8 [label="true"];
+    n8 -> n10 [label="true"];
+    n8 -> n9 [label="false"];
+    n9 -> n10 [label="true"];
+    n11 -> n12 [label="true"];
+    n12 -> n14 [label="true"];
+    n12 -> n13 [label="false"];
+    n13 -> n12 [label="true"];
+}

@@ -2,6 +2,7 @@
 #include "parser.tab.hh"
 #include "Symbol.h"
 #include "Semantic.h"
+#include "ir.h"
 
 extern Node *root;
 extern FILE *yyin;
@@ -61,17 +62,17 @@ int main(int argc, char **argv)
 
 		if (parseSuccess && !lexical_errors)
 		{
-			//printf("\nThe compiler successfuly generated a syntax tree for the given input! \n");
-
-			//printf("\nPrint Tree:  \n");
 			try
 			{
 				//root->print_tree();
 				root->generate_tree();
 				ST* st = new ST(root);
-				SemanticAnalyzer analyzer(st);
-				analyzer.analyze(root);
-				analyzer.printTotalErrors();
+				SemanticAnalyzer analyzer(st,root);
+				if(analyzer.errorCount>0){
+					cout << "Total Errors: " << analyzer.errorCount << endl;
+					return -1;
+				}
+				IR IntermediateRP(root,st);
 			}
 			catch (...)
 			{
