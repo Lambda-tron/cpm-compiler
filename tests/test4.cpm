@@ -2,17 +2,13 @@ main(): int {
   volatile n : int
   read(n)
 
-  volatile x : int := 1
   volatile i : int := 2
 
   for (i := 2, i <= n, i := i + 1) {
-    x := x * i
+    if ( (n / i) * i = n ) {
+      print(i)
+      print(n)
+    }
   }
-
-  if (x < 3) {
-    x := 0
-  }
-
-  print(x)
   return 0
 }

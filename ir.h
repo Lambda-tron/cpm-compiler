@@ -17,7 +17,7 @@ using namespace std;
 class TAC{
     string name, operand1, operand2, OP;
 
-public:
+    public:
     TAC() {}
 
     TAC(const string& name,
@@ -63,7 +63,7 @@ public:
 
 // statements
 class BasicBlock{
-public:
+    public:
     string name, type, relatedToClass;
     vector<TAC> TACs;
 
@@ -90,9 +90,9 @@ private:
     BasicBlock* rootBB = nullptr;
     string currentClassName = "";
 
+
 public:
-    IR(const Node* node, const ST* symbolTable){
-        (void)symbolTable;
+    IR(const Node* node){
         traverse(node);
         printIR();
         generateDot();
@@ -100,7 +100,7 @@ public:
 
     void traverse(const Node* n){
         bool openScope = false;
-
+        cout << n->type << ":" << n->value << ":" << n->lineno << endl;
         // create class / method block
         if (n->type == "class") {
             currentClassName = n->value;
@@ -233,8 +233,9 @@ public:
 
                 if (post_rhs->type == "arr_access") {
                     Node* index = *post_rhs->children.begin();
+                    string indexTac = genTACS(index);
                     currentBB->TACs.push_back(
-                        TAC("arr_access", genTACS(post_lhs), index->value, genTACS(rhs))
+                        TAC("arr_access", genTACS(post_lhs), indexTac, genTACS(rhs))
                     );
                 }
             } else {
@@ -460,8 +461,7 @@ public:
     }
 
     string genTACS(const Node* n, const string& className = "", const string& varName = "") {
-        (void)className;
-        (void)varName;
+
 
         // literals and identifiers
         if (n->children.empty()) {
@@ -507,6 +507,8 @@ public:
 
         // plain function call
         if (n->type == "call") {
+            Node* args = *n->children.begin();
+            traverse(args);
             string tmp = genStr(2);
             currentBB->TACs.push_back(
                 TAC(tmp, n->value, "call", "0")
@@ -533,8 +535,9 @@ public:
 
         } else if (rhs->type == "arr_access") {
             Node* index = *rhs->children.begin();
+            string indexTac = genTACS(index);
             currentBB->TACs.push_back(
-                TAC(genName, lhsTacStore, "access", index->value)
+                TAC(genName, lhsTacStore, "access", indexTac)
             );
 
         } else if (rhs->type == "funcMethcall") {

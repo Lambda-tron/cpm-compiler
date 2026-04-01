@@ -14,124 +14,12 @@ using std::endl;
 class SemanticAnalyzer {
 private:
     ST* symbolTable;
-public:
-    int errorCount = 0;
-    SemanticAnalyzer(ST* st,const Node* root) : symbolTable(st) {
-        analyze(root);
-    }
-
     bool didReturn = false;
     int returnLineNo = -1;
-
-    void analyze(const Node* node) {
-        bool openedScope = false;
-        bool hasReturnType = false;
-        
-        //check for dead code
-        if(didReturn && (node->lineno != returnLineNo-1 && node->lineno != returnLineNo)){
-            err_dead_code(node->type, node->value, node->lineno);
-        }
-
-        //check dublicate definitions & defined datatypes
-        if (node->type == "var"  || node->type == "v_var" || node->type == "method" || node->type == "class" || node->type == "param"){
-            if(checkDublicateDefinition(node->value)){
-                err_duplicate_definition(node->value, node->lineno);
-            }
-
-            //check if data Type Exist
-            if (node->type == "var" || node->type == "v_var") {
-                Symbol* symbol = lookup(node->value);
-                if (!symbol) return; // already reported elsewhere
-
-                if (!isBuiltinType(symbol->type)) {
-                    Scope* scope = getClassScope(symbol->type);
-                    if (!scope) {
-                        err_undefined_datatype(symbol->name, symbol->type, node->lineno);
-                    }
-                }
-
-                //check if the definition is valid
-                validateDefiniation(node);
-            }
-        }
-
-        //make sure the statement in IF returns bool
-        if(node->type == "IF"){
-            Node* stmt = *node->children.begin();
-            string dataType = evalExprType(stmt);
-
-            if (dataType != "BOOL") {
-                err_invalid_condition_type(dataType, stmt->lineno);
-            }
-        }
-
-        //evaluate postfixes
-        if(node->type == "postfix"){
-            string postFixType = evalExprType(node);
-        }
-
-        //Enter scope
-        if (node->type == "class" || node->type == "method" || node->type == "IF" || node->type == "FOR" || 
-            ((symbolTable->currentScope->name == "IF" || symbolTable->currentScope->name == "IFELSE") && node->type == "Stmtblock")) {
-                if(node->type == "method"){
-                    Symbol* sy = lookup(node->value);
-                    if(sy->type != "VOID"){
-                        hasReturnType=true;
-                        
-                    }
-                }
-
-		    enterScope(node);
-            openedScope = true;
-        }
-        else if (node->type == "return"){
-            Symbol* funcSymbol;
-            Scope* tmpScope = symbolTable->currentScope;
-            funcSymbol = tmpScope->parent->symbols[tmpScope->symbolIndexInParentTable];
-            while(funcSymbol->kind != "method"){
-                tmpScope = tmpScope->parent;
-                funcSymbol = tmpScope->parent->symbols[tmpScope->symbolIndexInParentTable];
-            }
-            
-            if(funcSymbol->type != "VOID"){
-                Node* returned = *node->children.begin();
-                string returnType = evalExprType(returned); 
-                
-                if (funcSymbol->type != returnType) {
-                    err_return_type_mismatch(funcSymbol->name, funcSymbol->type, returnType, node->lineno);
-                }else{
-                    returnLineNo = node->lineno;
-                    didReturn = true;
-                
-                }
-            }else{
-                err_void_return_value(funcSymbol->name, node->lineno);
-            }
-
-            
-
-        }
-        else if(node->type == "assign"){
-            assigmentCheck(node);
-        }
-
-        for (Node* child : node->children) {
-            analyze(child);
-        }
-
-        if (openedScope) {
-            if(hasReturnType && !didReturn){
-                err_missing_return(symbolTable->currentScope->name, node->lineno);
-            }
-                
-            leaveScope();
-            
-            didReturn=false;
-            returnLineNo=-1;
-           
-        }
-
-    }
+    bool ifReturn = false;
+    bool elseReturn = false;
+    bool forReturen = false;
+    int errorCount = 0;
 
 
     //enter Scope
@@ -381,6 +269,7 @@ public:
         for (Node* argument: argsNode->children) {
             string argType = argument->type;
             string paramType = funcScope->symbols[symbolIndex]->type;
+            argType = evalExprType(argument);
             //check if its call or POSTFIX
             if(argument->type == "call"){
                 argType = validateFunctionCall(argument);
@@ -783,6 +672,139 @@ public:
             << "', got '" << actualType << "'."
             << endl;
         errorCount++;
+    }
+
+public:
+    SemanticAnalyzer(ST* st,const Node* root) : symbolTable(st) {
+        analyze(root);
+    }
+
+    void analyze(const Node* node) {
+        bool openedScope = false;
+        bool hasReturnType = false;
+
+        //check for dead code
+        if(didReturn && (node->lineno != returnLineNo-1 && node->lineno != returnLineNo)){
+            err_dead_code(node->type, node->value, node->lineno);
+        }
+
+        //check dublicate definitions & defined datatypes
+        if (node->type == "var"  || node->type == "v_var" || node->type == "method" || node->type == "class" || node->type == "param"){
+            if(checkDublicateDefinition(node->value)){
+                err_duplicate_definition(node->value, node->lineno);
+            }
+
+            //check if data Type Exist
+            if (node->type == "var" || node->type == "v_var") {
+                Symbol* symbol = lookup(node->value);
+                if (!symbol) return; // already reported elsewhere
+
+                if (!isBuiltinType(symbol->type)) {
+                    Scope* scope = getClassScope(symbol->type);
+                    if (!scope) {
+                        err_undefined_datatype(symbol->name, symbol->type, node->lineno);
+                    }
+                }
+
+                //check if the definition is valid
+                validateDefiniation(node);
+            }
+        }
+
+        //make sure the statement in IF returns bool
+        if(node->type == "IF"){
+            Node* stmt = *node->children.begin();
+            string dataType = evalExprType(stmt);
+
+            if (dataType != "BOOL") {
+                err_invalid_condition_type(dataType, stmt->lineno);
+            }
+        }
+
+        //evaluate postfixes
+        if(node->type == "postfix"){
+            string postFixType = evalExprType(node);
+        }
+
+        //Enter scope
+        if (node->type == "class" || node->type == "method" || node->type == "IF" || node->type == "FOR" || 
+            ((symbolTable->currentScope->name == "IF" || symbolTable->currentScope->name == "IFELSE") && node->type == "Stmtblock")) {
+                if(node->type == "method"){
+                    Symbol* sy = lookup(node->value);
+                    if(sy->type != "VOID"){
+                        hasReturnType=true;
+                        
+                    }
+                }
+
+		    enterScope(node);
+            openedScope = true;
+        }
+        else if (node->type == "return"){
+            Symbol* funcSymbol;
+            Scope* tmpScope = symbolTable->currentScope;
+            funcSymbol = tmpScope->parent->symbols[tmpScope->symbolIndexInParentTable];
+            while(funcSymbol->kind != "method"){
+                tmpScope = tmpScope->parent;
+                funcSymbol = tmpScope->parent->symbols[tmpScope->symbolIndexInParentTable];
+            }
+            
+            if(funcSymbol->type != "VOID"){
+                Node* returned = *node->children.begin();
+                string returnType = evalExprType(returned); 
+                
+                if (funcSymbol->type != returnType) {
+                    err_return_type_mismatch(funcSymbol->name, funcSymbol->type, returnType, node->lineno);
+                }else{
+                    if(symbolTable->currentScope->name == "IFStmtblock"){
+                        ifReturn = true;
+                    }else if (symbolTable->currentScope->name == "ELSEStmtblock"){
+                        elseReturn = true;
+                    }else if (symbolTable->currentScope->name == "FOR"){
+                        forReturen = true;
+                    }
+                    returnLineNo = node->lineno;
+                    didReturn = true;
+                
+                }
+            }else{
+                err_void_return_value(funcSymbol->name, node->lineno);
+            }
+        }
+        else if(node->type == "assign"){
+            assigmentCheck(node);
+        }
+
+        for (Node* child : node->children) {
+            analyze(child);
+        }
+
+        if (openedScope) {
+            bool leavingMethod = symbolTable->currentScope->parent ? symbolTable->currentScope->parent->symbols[symbolTable->currentScope->symbolIndexInParentTable]->kind == "method" : false;
+            didReturn = (ifReturn && elseReturn) || forReturen || didReturn;
+
+            if(hasReturnType && !didReturn){
+                err_missing_return(symbolTable->currentScope->name, node->lineno);
+            }
+
+            leaveScope();
+
+            if(leavingMethod){
+                ifReturn = false;
+                elseReturn = false; 
+                forReturen = false;
+            }
+
+            didReturn=false;
+            returnLineNo=-1;
+
+        }
+
+
+    }
+
+    int getErrorCount(){
+        return errorCount;
     }
 };
 
