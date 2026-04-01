@@ -3,6 +3,8 @@
 #include "Symbol.h"
 #include "Semantic.h"
 #include "ir.h"
+#include "CppGen.h"
+#include "AsmGen.h"
 
 extern Node *root;
 extern FILE *yyin;
@@ -62,22 +64,24 @@ int main(int argc, char **argv)
 
 		if (parseSuccess && !lexical_errors)
 		{
-			try
-			{
-				//root->print_tree();
-				root->generate_tree();
-				ST* st = new ST(root);
-				SemanticAnalyzer analyzer(st,root);
-				if(analyzer.errorCount>0){
-					cout << "Total Errors: " << analyzer.errorCount << endl;
-					return -1;
-				}
-				IR IntermediateRP(root,st);
+			int semanticErrors = 0;
+			// root->print_tree();
+			root->generate_tree();
+
+			ST* st = new ST(root);
+			SemanticAnalyzer analyzer(st, root);
+
+			semanticErrors = analyzer.getErrorCount();
+			if (semanticErrors > 0) {
+				cout << "Total Errors: " << semanticErrors << endl;
+				return -1;
 			}
-			catch (...)
-			{
-				errCode = errCodes::AST_ERROR;
-			}
+
+			IR ir(root);
+			CppGen cg(ir.getBlocks(), ir.getClassAttributes());
+			AsmGen asmGen(ir.getBlocks(), "out.s");
+			system("g++ out.cpp -o CPPVersion");
+			system("g++ -no-pie out.s -o assemblyVersion");
 		}
 	}
 
